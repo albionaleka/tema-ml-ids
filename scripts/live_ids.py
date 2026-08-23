@@ -1732,15 +1732,15 @@ def predict_flow(flow):
 # ============================================================
 
 class AlertWriter:
+    """
+    Background JSON Lines writer.
 
-    def __init__(
-        self,
-        output_file
-    ):
+    Each ML alert is written as one JSON object on one line.
+    This format is suitable for Wazuh's JSON log collector.
+    """
 
-        self.output_file = Path(
-            output_file
-        )
+    def __init__(self, output_file):
+        self.output_file = Path(output_file)
 
         self.output_file.parent.mkdir(
             parents=True,
@@ -1752,158 +1752,39 @@ class AlertWriter:
             daemon=True
         )
 
-
     def start(self):
-
         self.thread.start()
 
-
     def stop(self):
-
-        prediction_queue.put(
-            None
-        )
-
-        self.thread.join(
-            timeout=5
-        )
-
-
-    def _load_existing(self):
-
-        if not self.output_file.exists():
-
-            return []
-
-
-        try:
-
-            with open(
-                self.output_file,
-                "r",
-                encoding="utf-8"
-            ) as f:
-
-                content = f.read().strip()
-
-
-            if not content:
-
-                return []
-
-
-            data = json.loads(
-                content
-            )
-
-
-            if isinstance(
-                data,
-                list
-            ):
-
-                return data
-
-
-            return [data]
-
-
-        except (
-            json.JSONDecodeError,
-            OSError
-        ):
-
-            backup = (
-                self.output_file.with_suffix(
-                    ".corrupt.json"
-                )
-            )
-
-
-            try:
-
-                self.output_file.rename(
-                    backup
-                )
-
-                print(
-                    f"WARNING: Corrupt JSON moved to {backup}"
-                )
-
-            except OSError:
-
-                pass
-
-
-            return []
-
-
-    def _atomic_write(
-        self,
-        alerts
-    ):
-
-        temporary = (
-            self.output_file.with_suffix(
-                ".tmp"
-            )
-        )
-
-
-        payload = json.dumps(
-            alerts,
-            indent=2,
-            ensure_ascii=False
-        )
-
-
-        with open(
-            temporary,
-            "w",
-            encoding="utf-8"
-        ) as f:
-
-            f.write(payload)
-
-            f.flush()
-
-            os.fsync(
-                f.fileno()
-            )
-
-
-        os.replace(
-            temporary,
-            self.output_file
-        )
-
+        prediction_queue.put(None)
+        self.thread.join(timeout=5)
 
     def _worker(self):
-
-        alerts = self._load_existing()
-
 
         while True:
 
             item = prediction_queue.get()
 
-
             try:
 
                 if item is None:
-
                     return
 
-
-                alerts.append(
-                    item
+                line = json.dumps(
+                    item,
+                    ensure_ascii=False,
+                    separators=(",", ":")
                 )
 
+                with open(
+                    self.output_file,
+                    "a",
+                    encoding="utf-8"
+                ) as f:
 
-                self._atomic_write(
-                    alerts
-                )
-
+                    f.write(line + "\n")
+                    f.flush()
+                    os.fsync(f.fileno())
 
             finally:
 
