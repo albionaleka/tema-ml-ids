@@ -25,8 +25,6 @@ from sklearn.utils.class_weight import compute_sample_weight
 
 warnings.filterwarnings("ignore")
 
-from pathlib import Path
-
 DATA_DIR = Path("/home/user/Documents/project/data/cicids2017")
 
 MODEL_DIR = Path("/home/user/Documents/project/models/random_forest")
