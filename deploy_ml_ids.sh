@@ -72,40 +72,31 @@ echo "[6/8] Creating systemd service..."
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
 Description=CIC-IDS2017 Real-Time Machine Learning Intrusion Detection System
-Documentation=Internal ML IDS
 After=network-online.target
 Wants=network-online.target
 
 [Service]
-
 Type=simple
 
 User=root
 Group=root
 
-WorkingDirectory=$PROJECT_DIR
+WorkingDirectory=/home/user/Documents/project
 
-ExecStart=$PYTHON $SCRIPT
+ExecStart=/home/user/Documents/project/venv/bin/python /home/user/Documents/project/scripts/live_ids.py
 
-Restart=always
-RestartSec=5s
+Restart=on-failure
+RestartSec=5
 
 Environment=PYTHONUNBUFFERED=1
 
 StandardOutput=journal
 StandardError=journal
 
-# Give the service enough time to terminate cleanly.
 TimeoutStopSec=10
 
-# Security-related capabilities.
-# Root already has these capabilities, but they explicitly document
-# the privileges required by Scapy.
 AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
 CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
-
-# Allow Scapy/network inspection.
-NoNewPrivileges=false
 
 [Install]
 WantedBy=multi-user.target
