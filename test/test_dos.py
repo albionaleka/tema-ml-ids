@@ -747,55 +747,79 @@ def save_ml_alert(
 
 sample = {
 
-    "Destination Port": 2170,
+    # --------------------------------------------------------
+    # Alert/context metadata
+    #
+    # These fields are NOT model features.
+    # They are only used when creating the Wazuh alert.
+    # --------------------------------------------------------
 
-    "Flow Duration": 77,
+    "src_ip":
+        "192.168.1.50",
 
-    "Total Fwd Packets": 1,
+    "src_port":
+        49152,
 
-    "Total Backward Packets": 1,
+    "dst_ip":
+        "192.168.1.10",
 
-    "Total Length of Fwd Packets": 0,
+    "protocol":
+        6,
 
-    "Total Length of Bwd Packets": 6,
 
-    "Fwd Packet Length Max": 0,
+    # --------------------------------------------------------
+    # CIC-IDS2017 ML FEATURES
+    # --------------------------------------------------------
 
-    "Fwd Packet Length Min": 0,
+    "Destination Port": 80,
 
-    "Fwd Packet Length Mean": 0,
+    "Flow Duration": 11312786,
+
+    "Total Fwd Packets": 5,
+
+    "Total Backward Packets": 0,
+
+    "Total Length of Fwd Packets": 30,
+
+    "Total Length of Bwd Packets": 0,
+
+    "Fwd Packet Length Max": 6,
+
+    "Fwd Packet Length Min": 6,
+
+    "Fwd Packet Length Mean": 6,
 
     "Fwd Packet Length Std": 0,
 
-    "Bwd Packet Length Max": 6,
+    "Bwd Packet Length Max": 0,
 
-    "Bwd Packet Length Min": 6,
+    "Bwd Packet Length Min": 0,
 
-    "Bwd Packet Length Mean": 6,
+    "Bwd Packet Length Mean": 0,
 
     "Bwd Packet Length Std": 0,
 
-    "Flow Bytes/s": 77922.07792,
+    "Flow Bytes/s": 2.651866658,
 
-    "Flow Packets/s": 25974.02597,
+    "Flow Packets/s": 0.441977776,
 
-    "Flow IAT Mean": 77,
+    "Flow IAT Mean": 2828196.5,
 
-    "Flow IAT Std": 0,
+    "Flow IAT Std": 5655643.001,
 
-    "Flow IAT Max": 77,
+    "Flow IAT Max": 11300000,
 
-    "Flow IAT Min": 77,
+    "Flow IAT Min": 273,
 
-    "Fwd IAT Total": 0,
+    "Fwd IAT Total": 11300000,
 
-    "Fwd IAT Mean": 0,
+    "Fwd IAT Mean": 2828196.5,
 
-    "Fwd IAT Std": 0,
+    "Fwd IAT Std": 5655643.001,
 
-    "Fwd IAT Max": 0,
+    "Fwd IAT Max": 11300000,
 
-    "Fwd IAT Min": 0,
+    "Fwd IAT Min": 273,
 
     "Bwd IAT Total": 0,
 
@@ -815,23 +839,23 @@ sample = {
 
     "Bwd URG Flags": 0,
 
-    "Fwd Header Length": 40,
+    "Fwd Header Length": 100,
 
-    "Bwd Header Length": 20,
+    "Bwd Header Length": 0,
 
-    "Fwd Packets/s": 12987.01299,
+    "Fwd Packets/s": 0.441977776,
 
-    "Bwd Packets/s": 12987.01299,
+    "Bwd Packets/s": 0,
 
-    "Min Packet Length": 0,
+    "Min Packet Length": 6,
 
     "Max Packet Length": 6,
 
-    "Packet Length Mean": 2,
+    "Packet Length Mean": 6,
 
-    "Packet Length Std": 3.464101615,
+    "Packet Length Std": 0,
 
-    "Packet Length Variance": 12,
+    "Packet Length Variance": 0,
 
     "FIN Flag Count": 0,
 
@@ -839,7 +863,7 @@ sample = {
 
     "RST Flag Count": 0,
 
-    "PSH Flag Count": 1,
+    "PSH Flag Count": 0,
 
     "ACK Flag Count": 0,
 
@@ -849,15 +873,15 @@ sample = {
 
     "ECE Flag Count": 0,
 
-    "Down/Up Ratio": 1,
+    "Down/Up Ratio": 0,
 
-    "Average Packet Size": 3,
+    "Average Packet Size": 7.2,
 
-    "Avg Fwd Segment Size": 0,
+    "Avg Fwd Segment Size": 6,
 
-    "Avg Bwd Segment Size": 6,
+    "Avg Bwd Segment Size": 0,
 
-    "Fwd Header Length.1": 40,
+    "Fwd Header Length.1": 100,
 
     "Fwd Avg Bytes/Bulk": 0,
 
@@ -871,39 +895,38 @@ sample = {
 
     "Bwd Avg Bulk Rate": 0,
 
-    "Subflow Fwd Packets": 1,
+    "Subflow Fwd Packets": 5,
 
-    "Subflow Fwd Bytes": 0,
+    "Subflow Fwd Bytes": 30,
 
-    "Subflow Bwd Packets": 1,
+    "Subflow Bwd Packets": 0,
 
-    "Subflow Bwd Bytes": 6,
+    "Subflow Bwd Bytes": 0,
 
-    "Init_Win_bytes_forward": 29200,
+    "Init_Win_bytes_forward": 256,
 
-    "Init_Win_bytes_backward": 0,
+    "Init_Win_bytes_backward": -1,
 
-    "act_data_pkt_fwd": 0,
+    "act_data_pkt_fwd": 4,
 
-    "min_seg_size_forward": 40,
+    "min_seg_size_forward": 20,
 
-    "Active Mean": 0,
+    "Active Mean": 1125,
 
     "Active Std": 0,
 
-    "Active Max": 0,
+    "Active Max": 1125,
 
-    "Active Min": 0,
+    "Active Min": 1125,
 
-    "Idle Mean": 0,
+    "Idle Mean": 11300000,
 
     "Idle Std": 0,
 
-    "Idle Max": 0,
+    "Idle Max": 11300000,
 
-    "Idle Min": 0
+    "Idle Min": 11300000
 }
-
 
 # ============================================================
 # 11. RUN PREDICTION

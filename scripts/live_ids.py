@@ -1735,15 +1735,20 @@ class AlertWriter:
     """
     Background JSON Lines writer.
 
-    Each ML alert is written as one JSON object on one line.
-    This format is suitable for Wazuh's JSON log collector.
+    Only malicious ML predictions are sent to this writer.
     """
 
     def __init__(self, output_file):
+
         self.output_file = Path(output_file)
 
         self.output_file.parent.mkdir(
             parents=True,
+            exist_ok=True
+        )
+
+        # Create the file if it doesn't exist.
+        self.output_file.touch(
             exist_ok=True
         )
 
@@ -1753,11 +1758,16 @@ class AlertWriter:
         )
 
     def start(self):
+
         self.thread.start()
 
     def stop(self):
+
         prediction_queue.put(None)
-        self.thread.join(timeout=5)
+
+        self.thread.join(
+            timeout=5
+        )
 
     def _worker(self):
 
@@ -1768,6 +1778,7 @@ class AlertWriter:
             try:
 
                 if item is None:
+
                     return
 
                 line = json.dumps(
@@ -1782,9 +1793,15 @@ class AlertWriter:
                     encoding="utf-8"
                 ) as f:
 
-                    f.write(line + "\n")
+                    f.write(
+                        line + "\n"
+                    )
+
                     f.flush()
-                    os.fsync(f.fileno())
+
+                    os.fsync(
+                        f.fileno()
+                    )
 
             finally:
 
@@ -1808,51 +1825,108 @@ def create_alert(
     confidence
 ):
 
-    return {
-        "timestamp":
-            datetime.now(
-                timezone.utc
-            ).isoformat(),
+    label = str(prediction_label).strip()
 
-        "event_type":
-            "ml_network_flow",
+    # Collect TCP flags seen in this flow.
+    tcp_flags = []
 
-        "source":
-            "cic_ids2017_live_ids",
+    if flow.syn_count > 0:
+        tcp_flags.append("SYN")
 
-        "src_ip":
-            flow.src_ip,
+    if flow.fin_count > 0:
+        tcp_flags.append("FIN")
 
-        "src_port":
-            flow.src_port,
+    if flow.rst_count > 0:
+        tcp_flags.append("RST")
 
-        "dst_ip":
-            flow.dst_ip,
+    if flow.psh_count > 0:
+        tcp_flags.append("PSH")
 
-        "dst_port":
-            flow.dst_port,
+    if flow.ack_count > 0:
+        tcp_flags.append("ACK")
 
-        "protocol":
-            flow.protocol,
+    if flow.urg_count > 0:
+        tcp_flags.append("URG")
 
-        "prediction_label":
-            str(prediction_label),
+    if flow.ece_count > 0:
+        tcp_flags.append("ECE")
 
-        "confidence_score":
-            round(
-                float(confidence),
-                6
-            ),
+    if flow.cwr_count > 0:
+        tcp_flags.append("CWR")
 
-        "severity":
+    # Flow duration in milliseconds.
+    duration_ms = 0.0
+
+    if (
+        flow.start_time is not None
+        and flow.last_seen is not None
+    ):
+        duration_ms = max(
             (
-                "benign"
-                if str(prediction_label)
-                in BENIGN_LABELS
-                else "malicious"
-            )
+                flow.last_seen
+                - flow.start_time
+            ) * 1000.0,
+            0.0
+        )
+
+    return {
+        "timestamp": datetime.now(
+            timezone.utc
+        ).isoformat(),
+
+        "source": "random_forest_ids",
+
+        "prediction_label": label,
+
+        "confidence_score": round(
+            float(confidence),
+            6
+        ),
+
+        "severity": (
+            "benign"
+            if label.casefold() in BENIGN_LABELS
+            else "malicious"
+        ),
+
+        "src_ip": flow.src_ip,
+        "src_port": flow.src_port,
+
+        "dst_ip": flow.dst_ip,
+        "dst_port": flow.dst_port,
+
+        "protocol": flow.protocol,
+
+        "flow_duration": round(
+            duration_ms,
+            3
+        ),
+
+        "total_packets": flow.packet_count,
+
+        "fwd_packets": len(
+            flow.forward_packets
+        ),
+
+        "bwd_packets": len(
+            flow.backward_packets
+        ),
+
+        "fwd_bytes": flow.forward_bytes,
+
+        "bwd_bytes": flow.backward_bytes,
+
+        "total_bytes": (
+            flow.forward_bytes
+            + flow.backward_bytes
+        ),
+
+        "tcp_flags": tcp_flags
     }
 
+# ============================================================
+# PROCESS COMPLETED FLOW
+# ============================================================
 
 # ============================================================
 # PROCESS COMPLETED FLOW
@@ -1864,26 +1938,43 @@ def process_flow(flow):
 
         prediction_label, confidence = predict_flow(flow)
 
+        label = str(prediction_label).strip()
+
         print(
             f"[ML] "
             f"{flow.src_ip}:{flow.src_port} -> "
             f"{flow.dst_ip}:{flow.dst_port} "
             f"protocol={flow.protocol} "
-            f"prediction={prediction_label} "
+            f"prediction={label} "
             f"confidence={confidence:.4f}"
         )
 
+        if label.casefold() in {
+            "benign",
+            "normal"
+        }:
+
+            print(
+                "[ML] Normal/benign traffic - "
+                "not written to ml_alerts.json"
+            )
+
+            return
+
         event = create_alert(
             flow,
-            prediction_label,
+            label,
             confidence
         )
 
         prediction_queue.put(event)
 
         print(
-            "[LOG] "
-            + json.dumps(event)
+            "[ALERT] "
+            + json.dumps(
+                event,
+                ensure_ascii=False
+            )
         )
 
     except Exception as exc:

@@ -43,9 +43,12 @@ mkdir -p "$LOG_DIR"
 
 echo "[3/8] Preparing ml_alerts.json..."
 
+# ml_alerts.json is JSON Lines (one alert object per line), NOT a
+# JSON array -- Wazuh's json log_format reads it line by line.
+# Do not seed it with "[]", that breaks line-based parsing.
 if [ ! -f "$ALERT_FILE" ]; then
 
-    echo "[]" > "$ALERT_FILE"
+    : > "$ALERT_FILE"
 
 fi
 
